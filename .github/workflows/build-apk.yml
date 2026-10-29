@@ -1,4 +1,4 @@
-name: Compilar SonsPlayer V3
+name: Compilar SonsPlayer V4
 on:
   workflow_dispatch:
   push:
@@ -29,6 +29,8 @@ jobs:
         run: cat sources/chunk_*.txt | base64 -d | xz -d | tar -x
       - name: Instalar YouTube e equalizador V3.1
         run: python3 enhancements/install_v31.py
+      - name: Ativar downloads autorizados e biblioteca offline V4
+        run: python3 enhancements/install_v4.py
       - name: Atualizar sintaxe do Kotlin Gradle
         shell: bash
         run: |
@@ -37,10 +39,10 @@ jobs:
       - name: Criar instalacao independente sem conflito de assinatura
         shell: bash
         run: |
-          sed -i 's/applicationId = "com.sonsplayer.app"/applicationId = "com.sonsplayer.app.samsung"/' app/build.gradle.kts
-          sed -i 's/versionCode = 4/versionCode = 5/' app/build.gradle.kts
-          sed -i 's/versionName = "3.1.0"/versionName = "3.1.1"/' app/build.gradle.kts
-          sed -i 's/android:label="SonsPlayer"/android:label="SonsPlayer V3.1"/' app/src/main/AndroidManifest.xml
+          sed -i 's/applicationId = "com.sonsplayer.app"/applicationId = "com.sonsplayer.app.v4"/' app/build.gradle.kts
+          sed -i 's/versionCode = 4/versionCode = 6/' app/build.gradle.kts
+          sed -i 's/versionName = "3.1.0"/versionName = "4.0.0"/' app/build.gradle.kts
+          sed -i 's/android:label="SonsPlayer"/android:label="SonsPlayer V4"/' app/src/main/AndroidManifest.xml
           sed -i 's/android:name="\.MainActivity"/android:name="com.sonsplayer.app.MainActivity"/g' app/src/main/AndroidManifest.xml
           sed -i 's/android:name="\.MusicPlaybackService"/android:name="com.sonsplayer.app.MusicPlaybackService"/g' app/src/main/AndroidManifest.xml
           sed -i 's/android:name="\.YouTubePlaylistActivity"/android:name="com.sonsplayer.app.YouTubePlaylistActivity"/g' app/src/main/AndroidManifest.xml
@@ -56,6 +58,15 @@ jobs:
           name: SonsPlayer-V3_2-Android-apk
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+      - name: Empacotar fonte do Android Studio
+        shell: bash
+        run: |
+          zip -qr SonsPlayer_V4_AndroidStudio.zip app/src app/build.gradle.kts build.gradle.kts settings.gradle.kts gradle.properties gradlew gradlew.bat gradle/wrapper .github/workflows/build-apk.yml
+      - name: Publicar projeto fonte
+        uses: actions/upload-artifact@v4
+        with:
+          name: SonsPlayer-V4-AndroidStudio
+          path: SonsPlayer_V4_AndroidStudio.zip
       - name: Publicar APK para download direto no GitHub Releases
         shell: bash
         env:
