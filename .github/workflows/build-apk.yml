@@ -7,7 +7,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -42,3 +42,14 @@ jobs:
           name: SonsPlayer-V3-debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+      - name: Publicar APK para download direto no GitHub Releases
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp app/build/outputs/apk/debug/app-debug.apk SonsPlayer_V3_1_YouTube_EQ.apk
+          if gh release view "v3.1.0" >/dev/null 2>&1; then
+            gh release upload "v3.1.0" SonsPlayer_V3_1_YouTube_EQ.apk --clobber
+          else
+            gh release create "v3.1.0" SonsPlayer_V3_1_YouTube_EQ.apk --target "$GITHUB_SHA" --title "SonsPlayer V3.1 - YouTube e Equalizador" --notes "APK Android debug. YouTube dentro do aplicativo e equalizador para músicas locais; recurso ainda não testado em celular físico."
+          fi
