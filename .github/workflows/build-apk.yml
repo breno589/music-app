@@ -48,14 +48,12 @@ jobs:
           sed -i 's/android:name="\.YouTubePlaylistActivity"/android:name="com.sonsplayer.app.YouTubePlaylistActivity"/g' app/src/main/AndroidManifest.xml
           sed -i 's/android:name="\.YouTubeBrowserActivity"/android:name="com.sonsplayer.app.YouTubeBrowserActivity"/g' app/src/main/AndroidManifest.xml
           sed -i 's/android:name="\.EqualizerActivity"/android:name="com.sonsplayer.app.EqualizerActivity"/g' app/src/main/AndroidManifest.xml
-      - name: Ativar downloads offline e interface SonsPlayer V3.2
-        run: python3 enhancements/install_v32.py
       - name: Gerar APK
         run: gradle :app:assembleDebug --no-daemon --stacktrace
       - name: Publicar APK
         uses: actions/upload-artifact@v4
         with:
-          name: SonsPlayer-V3_2-Android-apk
+          name: SonsPlayer-V4-Android-apk
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
       - name: Empacotar fonte do Android Studio
@@ -72,9 +70,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          cp app/build/outputs/apk/debug/app-debug.apk SonsPlayer_V3_2_Offline_EQ.apk
-          if gh release view "v3.2.0-offline" >/dev/null 2>&1; then
-            gh release upload "v3.2.0-offline" SonsPlayer_V3_2_Offline_EQ.apk --clobber
+          cp app/build/outputs/apk/debug/app-debug.apk SonsPlayer_V4_Offline_EQ.apk
+          if gh release view "v4.0.0" >/dev/null 2>&1; then
+            gh release upload "v4.0.0" SonsPlayer_V4_Offline_EQ.apk --clobber
           else
-            gh release create "v3.2.0-offline" SonsPlayer_V3_2_Offline_EQ.apk --target "$GITHUB_SHA" --title "SonsPlayer V3.2 - Offline, YouTube e Equalizador" --notes "APK Android debug para uso pessoal; download de arquivos de áudio HTTPS autorizados, reprodução offline e com tela desligada, YouTube integrado com tela visível e equalizador para músicas do ExoPlayer. Nao converte videos YouTube e nao foi testado em dispositivo."
+            gh release create "v4.0.0" SonsPlayer_V4_Offline_EQ.apk --target "$GITHUB_SHA" --title "SonsPlayer V4 - Offline, YouTube e Equalizador" --notes "APK de desenvolvimento: audio autorizado em HTTPS offline, reproducao local em segundo plano, playlists, favoritos, YouTube no navegador interno com tela visivel e EQ para audio local. Nao extrai videos do YouTube. Ainda sem testes em telefone."
           fi
