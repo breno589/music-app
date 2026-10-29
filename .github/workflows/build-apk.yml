@@ -27,6 +27,8 @@ jobs:
           gradle-version: '8.13'
       - name: Restaurar código-fonte
         run: cat sources/chunk_*.txt | base64 -d | xz -d | tar -x
+      - name: Instalar YouTube e equalizador V3.1
+        run: python3 enhancements/install_v31.py
       - name: Atualizar sintaxe do Kotlin Gradle
         shell: bash
         run: |
