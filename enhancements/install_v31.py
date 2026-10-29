@@ -104,7 +104,7 @@ class EqualizerActivity : AppCompatActivity() {
             setPadding(20, 20, 20, 24)
             setBackgroundColor(Color.rgb(10, 11, 18))
         }
-        val scroll = ScrollView(this).apply { fillViewport = true }
+        val scroll = ScrollView(this).apply { isFillViewport = true }
         scroll.addView(root)
         setContentView(scroll)
 
