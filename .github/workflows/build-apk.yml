@@ -1,0 +1,78 @@
+name: Compilar SonsPlayer V4
+on:
+  workflow_dispatch:
+  push:
+    branches: [sonsplayer-v3-build]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Preparar Android SDK
+        shell: bash
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | head -n 1)"
+          echo "Usando: $SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses > /dev/null || true
+          "$SDKMANAGER" "platforms;android-36" "build-tools;35.0.0"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.13'
+      - name: Restaurar código-fonte
+        run: cat sources/chunk_*.txt | base64 -d | xz -d | tar -x
+      - name: Instalar YouTube e equalizador V3.1
+        run: python3 enhancements/install_v31.py
+      - name: Ativar downloads autorizados e biblioteca offline V4
+        run: python3 enhancements/install_v4.py
+      - name: Atualizar sintaxe do Kotlin Gradle
+        shell: bash
+        run: |
+          sed -i '/kotlinOptions { jvmTarget = "17" }/d' app/build.gradle.kts
+          printf '\nkotlin { compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) } }\n' >> app/build.gradle.kts
+      - name: Criar instalacao independente sem conflito de assinatura
+        shell: bash
+        run: |
+          sed -i 's/applicationId = "com.sonsplayer.app"/applicationId = "com.sonsplayer.app.v4"/' app/build.gradle.kts
+          sed -i 's/versionCode = 4/versionCode = 6/' app/build.gradle.kts
+          sed -i 's/versionName = "3.1.0"/versionName = "4.0.0"/' app/build.gradle.kts
+          sed -i 's/android:label="SonsPlayer"/android:label="SonsPlayer V4"/' app/src/main/AndroidManifest.xml
+          sed -i 's/android:name="\.MainActivity"/android:name="com.sonsplayer.app.MainActivity"/g' app/src/main/AndroidManifest.xml
+          sed -i 's/android:name="\.MusicPlaybackService"/android:name="com.sonsplayer.app.MusicPlaybackService"/g' app/src/main/AndroidManifest.xml
+          sed -i 's/android:name="\.YouTubePlaylistActivity"/android:name="com.sonsplayer.app.YouTubePlaylistActivity"/g' app/src/main/AndroidManifest.xml
+          sed -i 's/android:name="\.YouTubeBrowserActivity"/android:name="com.sonsplayer.app.YouTubeBrowserActivity"/g' app/src/main/AndroidManifest.xml
+          sed -i 's/android:name="\.EqualizerActivity"/android:name="com.sonsplayer.app.EqualizerActivity"/g' app/src/main/AndroidManifest.xml
+      - name: Gerar APK
+        run: gradle :app:assembleDebug --no-daemon --stacktrace
+      - name: Publicar APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: SonsPlayer-V4-Android-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+      - name: Empacotar fonte do Android Studio
+        shell: bash
+        run: |
+          zip -qr SonsPlayer_V4_AndroidStudio.zip app/src app/build.gradle.kts build.gradle.kts settings.gradle.kts gradle.properties gradlew gradlew.bat gradle/wrapper .github/workflows/build-apk.yml
+      - name: Publicar projeto fonte
+        uses: actions/upload-artifact@v4
+        with:
+          name: SonsPlayer-V4-AndroidStudio
+          path: SonsPlayer_V4_AndroidStudio.zip
+      - name: Publicar APK para download direto no GitHub Releases
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp app/build/outputs/apk/debug/app-debug.apk SonsPlayer_V4_Offline_EQ.apk
+          if gh release view "v4.0.0" >/dev/null 2>&1; then
+            gh release upload "v4.0.0" SonsPlayer_V4_Offline_EQ.apk --clobber
+          else
+            gh release create "v4.0.0" SonsPlayer_V4_Offline_EQ.apk --target "$GITHUB_SHA" --title "SonsPlayer V4 - Offline, YouTube e Equalizador" --notes "APK de desenvolvimento: audio autorizado em HTTPS offline, reproducao local em segundo plano, playlists, favoritos, YouTube no navegador interno com tela visivel e EQ para audio local. Nao extrai videos do YouTube. Ainda sem testes em telefone."
+          fi
