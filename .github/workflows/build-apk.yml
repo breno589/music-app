@@ -34,12 +34,24 @@ jobs:
         run: |
           sed -i '/kotlinOptions { jvmTarget = "17" }/d' app/build.gradle.kts
           printf '\nkotlin { compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) } }\n' >> app/build.gradle.kts
+      - name: Criar instalacao independente sem conflito de assinatura
+        shell: bash
+        run: |
+          sed -i 's/applicationId = "com.sonsplayer.app"/applicationId = "com.sonsplayer.app.samsung"/' app/build.gradle.kts
+          sed -i 's/versionCode = 4/versionCode = 5/' app/build.gradle.kts
+          sed -i 's/versionName = "3.1.0"/versionName = "3.1.1"/' app/build.gradle.kts
+          sed -i 's/android:label="SonsPlayer"/android:label="SonsPlayer V3.1"/' app/src/main/AndroidManifest.xml
+          sed -i 's/android:name="\.MainActivity"/android:name="com.sonsplayer.app.MainActivity"/g' app/src/main/AndroidManifest.xml
+          sed -i 's/android:name="\.MusicPlaybackService"/android:name="com.sonsplayer.app.MusicPlaybackService"/g' app/src/main/AndroidManifest.xml
+          sed -i 's/android:name="\.YouTubePlaylistActivity"/android:name="com.sonsplayer.app.YouTubePlaylistActivity"/g' app/src/main/AndroidManifest.xml
+          sed -i 's/android:name="\.YouTubeBrowserActivity"/android:name="com.sonsplayer.app.YouTubeBrowserActivity"/g' app/src/main/AndroidManifest.xml
+          sed -i 's/android:name="\.EqualizerActivity"/android:name="com.sonsplayer.app.EqualizerActivity"/g' app/src/main/AndroidManifest.xml
       - name: Gerar APK
         run: gradle :app:assembleDebug --no-daemon --stacktrace
       - name: Publicar APK
         uses: actions/upload-artifact@v4
         with:
-          name: SonsPlayer-V3-debug-apk
+          name: SonsPlayer-V3_1-Samsung-apk
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
       - name: Publicar APK para download direto no GitHub Releases
@@ -47,9 +59,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          cp app/build/outputs/apk/debug/app-debug.apk SonsPlayer_V3_1_YouTube_EQ.apk
-          if gh release view "v3.1.0" >/dev/null 2>&1; then
-            gh release upload "v3.1.0" SonsPlayer_V3_1_YouTube_EQ.apk --clobber
+          cp app/build/outputs/apk/debug/app-debug.apk SonsPlayer_V3_1_Samsung.apk
+          if gh release view "v3.1.1-samsung" >/dev/null 2>&1; then
+            gh release upload "v3.1.1-samsung" SonsPlayer_V3_1_Samsung.apk --clobber
           else
-            gh release create "v3.1.0" SonsPlayer_V3_1_YouTube_EQ.apk --target "$GITHUB_SHA" --title "SonsPlayer V3.1 - YouTube e Equalizador" --notes "APK Android debug. YouTube dentro do aplicativo e equalizador para músicas locais; recurso ainda não testado em celular físico."
+            gh release create "v3.1.1-samsung" SonsPlayer_V3_1_Samsung.apk --target "$GITHUB_SHA" --title "SonsPlayer V3.1 para Samsung - instalacao independente" --notes "APK independente para evitar conflito de assinaturas entre V3 e V3.1; YouTube incorporado e equalizador para músicas locais; nao testado em aparelho físico."
           fi
