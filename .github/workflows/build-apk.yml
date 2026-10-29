@@ -31,7 +31,7 @@ jobs:
         shell: bash
         run: |
           sed -i '/kotlinOptions { jvmTarget = "17" }/d' app/build.gradle.kts
-          printf '\\nkotlin { compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) } }\\n' >> app/build.gradle.kts
+          printf '\nkotlin { compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) } }\n' >> app/build.gradle.kts
       - name: Gerar APK
         run: gradle :app:assembleDebug --no-daemon --stacktrace
       - name: Publicar APK
